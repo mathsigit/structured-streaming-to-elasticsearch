@@ -11,14 +11,21 @@ object Streaming2ElasticsearchApp {
   var targetFileList = Array.empty[File]
 
   def main(args: Array[String]): Unit = {
-    targetFileList = cleanFileList(new File("/Users/stana/Downloads/tsb-poc/Q2_ELK/ptt_corpus_tokenize"))
+    if (args.length>0){
+      val input = args(0)
+      targetFileList = cleanFileList(new File(input))
 
-    while(!targetFileList.isEmpty){
+      while(!targetFileList.isEmpty){
 
-      writeToEs(targetFileList)
+        writeToEs(targetFileList)
 
-      targetFileList = targetFileList.drop(getTargetFileListDropSize(targetFileList))
+        targetFileList = targetFileList.drop(getTargetFileListDropSize(targetFileList))
+      }
+    } else {
+      System.out.println("Please input the path of directory")
     }
+
+
   }
 
   def writeToEs(files: Array[File]): Unit = {
