@@ -1,4 +1,4 @@
-name := "structured-streaming-examples"
+name := "structured-streaming-to-elasticsearch"
 
 version := "0.1"
 
