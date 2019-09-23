@@ -11,28 +11,31 @@ object Streaming2ElasticsearchApp {
   var targetFileList = Array.empty[File]
 
   def main(args: Array[String]): Unit = {
-//    targetFileList = cleanFileList(new File("/Volumes/Sdhd/Downloads/Q2_ELK/ptt_corpus_tokenize"))
     targetFileList = cleanFileList(new File("/Users/stana/Downloads/tsb-poc/Q2_ELK/ptt_corpus_tokenize"))
 
     while(!targetFileList.isEmpty){
-      val spark = SparkSession
-        .builder()
-        .appName("WriteToES")
-        .master("local[*]")
-//        .config("spark.es.nodes","localhost")
-        .config("spark.es.nodes","10.3.0.36")
-        .config("spark.es.port","9200")
-        .config("es.index.auto.create", "true")
-        .config("es.nodes.wan.only", "true")
-        .getOrCreate()
-      import spark.implicits._
-      val indexDocuments = Streaming2ElasticsearchApp.genEsDataSeq().toDF()
-//      indexDocuments.saveToEs("stt_corpus")
-      indexDocuments.saveToEs("test_stt_corpus")
 
+      writeToEs(targetFileList)
 
       targetFileList = targetFileList.drop(getTargetFileListDropSize(targetFileList))
     }
+  }
+
+  def writeToEs(files: Array[File]): Unit = {
+    val spark = SparkSession
+      .builder()
+      .appName("WriteToES")
+      .master("local[*]")
+      //        .config("spark.es.nodes","localhost")
+      .config("spark.es.nodes","10.3.0.36")
+      .config("spark.es.port","9200")
+      .config("es.index.auto.create", "true")
+      .config("es.nodes.wan.only", "true")
+      .getOrCreate()
+    import spark.implicits._
+    val indexDocuments = Streaming2ElasticsearchApp.genEsDataSeq(files).toDF()
+//    indexDocuments.saveToEs("stt_corpus", Map("es.mapping.id" -> "call_id"))
+    indexDocuments.saveToEs("stt_corpus")
   }
 
   def getListOfFiles(dir: File): Array[File] = {
@@ -55,8 +58,8 @@ object Streaming2ElasticsearchApp {
     takeLength
   }
 
-  def genEsDataSeq(): Seq[EsDataIndex] ={
-    val f100 = targetFileList.take(getTargetFileListDropSize(targetFileList))
+  def genEsDataSeq(files: Array[File]): Seq[EsDataIndex] ={
+    val f100 = files.take(getTargetFileListDropSize(files))
     var ns = Seq.empty[EsDataIndex]
     for ((x,i) <- f100.zipWithIndex) {
       ns = genEsData(x,ns)
@@ -65,10 +68,9 @@ object Streaming2ElasticsearchApp {
   }
 
   def genEsData(f: File, fs: Seq[EsDataIndex]): Seq[EsDataIndex] ={
-    val ff = f
     val dateOfFile = f.getName.split("\\.").toList(1)
     val EData = EsDataIndex(
-      (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(dateOfFile.toLong).replace(" ","T"),
+      (new SimpleDateFormat("yyyy-MM-dd HH:mm:ss")).format(dateOfFile.toLong * 1000L).replace(" ", "T"),
       f.getName,
       fileToString(f)
     )
