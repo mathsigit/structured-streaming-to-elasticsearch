@@ -105,7 +105,7 @@ object Streaming2ElasticsearchApp {
     finally {
       inStream.close()
     }
-    new String(outStream.toByteArray()).filter(_ >= ' ')
+    new String(outStream.toByteArray(), "UTF-8").filter(_ >= ' ')
   }
 }
 
