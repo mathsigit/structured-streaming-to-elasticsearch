@@ -11,21 +11,24 @@ object Streaming2ElasticsearchApp {
   var targetFileList = Array.empty[File]
 
   def main(args: Array[String]): Unit = {
-    targetFileList = cleanFileList(new File("/Volumes/Sdhd/Downloads/Q2_ELK/ptt_corpus_tokenize"))
+//    targetFileList = cleanFileList(new File("/Volumes/Sdhd/Downloads/Q2_ELK/ptt_corpus_tokenize"))
+    targetFileList = cleanFileList(new File("/Users/stana/Downloads/tsb-poc/Q2_ELK/ptt_corpus_tokenize"))
 
     while(!targetFileList.isEmpty){
       val spark = SparkSession
         .builder()
         .appName("WriteToES")
         .master("local[*]")
-        .config("spark.es.nodes","localhost")
+//        .config("spark.es.nodes","localhost")
+        .config("spark.es.nodes","10.3.0.36")
         .config("spark.es.port","9200")
         .config("es.index.auto.create", "true")
         .config("es.nodes.wan.only", "true")
         .getOrCreate()
       import spark.implicits._
       val indexDocuments = Streaming2ElasticsearchApp.genEsDataSeq().toDF()
-      indexDocuments.saveToEs("stt_corpus")
+//      indexDocuments.saveToEs("stt_corpus")
+      indexDocuments.saveToEs("test_stt_corpus")
 
 
       targetFileList = targetFileList.drop(getTargetFileListDropSize(targetFileList))
@@ -93,7 +96,7 @@ object Streaming2ElasticsearchApp {
     finally {
       inStream.close()
     }
-    new String(outStream.toByteArray())
+    new String(outStream.toByteArray()).filter(_ >= ' ')
   }
 }
 
